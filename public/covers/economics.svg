@@ -1,0 +1,9 @@
+<svg width="640" height="480" viewBox="0 0 640 480" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="640" height="480" fill="#1F8A4C"/>
+  <rect x="60" y="52" width="250" height="376" rx="16" fill="#FFF7D8"/>
+  <rect x="330" y="52" width="250" height="376" rx="16" fill="#E7F7EF"/>
+  <path d="M115 324C156 245 203 245 249 324" stroke="#1F2933" stroke-width="16" stroke-linecap="round"/>
+  <path d="M383 326L430 228L470 278L524 168" stroke="#1F8A4C" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="184" cy="170" r="56" fill="#F2C94C"/>
+  <text x="92" y="394" fill="#1F2933" font-family="Arial, sans-serif" font-size="30" font-weight="700">Economics</text>
+</svg>

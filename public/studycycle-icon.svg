@@ -1,0 +1,20 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="98" fill="white"/>
+  <rect x="8" y="8" width="496" height="496" rx="92" stroke="#EEF2F7" stroke-width="16"/>
+  <path d="M203 83C151 96 109 134 88 185C64 242 77 309 121 354" stroke="#55AE35" stroke-width="28" stroke-linecap="round"/>
+  <path d="M121 354L102 353" stroke="#55AE35" stroke-width="28" stroke-linecap="round"/>
+  <path d="M203 83L203 66" stroke="#55AE35" stroke-width="28" stroke-linecap="round"/>
+  <path d="M203 66L248 107L203 147V122" fill="#55AE35"/>
+  <path d="M309 99C361 115 400 157 416 210C433 268 413 333 365 373" stroke="#0B65C9" stroke-width="28" stroke-linecap="round"/>
+  <path d="M365 373L366 395" stroke="#0B65C9" stroke-width="28" stroke-linecap="round"/>
+  <path d="M366 395L320 357L362 313L363 340" fill="#0B65C9"/>
+  <path d="M168 159C199 159 228 168 256 186V319C226 298 196 288 168 288V159Z" fill="white" stroke="#55AE35" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M344 159C313 159 284 168 256 186V319C286 298 316 288 344 288V159Z" fill="white" stroke="#0B65C9" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M153 174V305C190 303 222 316 256 341" stroke="#55AE35" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M359 174V305C322 303 290 316 256 341" stroke="#0B65C9" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M199 210C217 212 232 217 244 224" stroke="#55AE35" stroke-width="8" stroke-linecap="round"/>
+  <path d="M199 234C217 236 232 241 244 248" stroke="#55AE35" stroke-width="8" stroke-linecap="round"/>
+  <path d="M244 178H268V253L256 244L244 253V178Z" fill="#55AE35"/>
+  <text x="83" y="428" fill="#55AE35" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800">Study</text>
+  <text x="267" y="428" fill="#0B65C9" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800">Cycle</text>
+</svg>

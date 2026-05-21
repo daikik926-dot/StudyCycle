@@ -1,0 +1,10 @@
+<svg width="640" height="480" viewBox="0 0 640 480" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="640" height="480" fill="#102A43"/>
+  <rect x="82" y="60" width="476" height="360" rx="18" fill="#FFF7D8"/>
+  <path d="M320 122V332" stroke="#1F2933" stroke-width="16" stroke-linecap="round"/>
+  <path d="M226 174H414" stroke="#1F2933" stroke-width="16" stroke-linecap="round"/>
+  <path d="M232 174L176 280H288L232 174Z" fill="#1F8A4C"/>
+  <path d="M408 174L352 280H464L408 174Z" fill="#1F8A4C"/>
+  <rect x="244" y="332" width="152" height="20" rx="10" fill="#1F2933"/>
+  <text x="172" y="394" fill="#1F2933" font-family="Arial, sans-serif" font-size="34" font-weight="700">International Law</text>
+</svg>

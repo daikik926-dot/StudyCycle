@@ -1,11 +1,19 @@
-import { createAdminClient } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+
+function getAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+}
 
 export async function POST(req: NextRequest) {
   try {
     const { email, password, displayName } = await req.json();
 
-    const admin = createAdminClient();
+    const admin = getAdminClient();
 
     const { data, error } = await admin.auth.admin.createUser({
       email,
@@ -21,7 +29,7 @@ export async function POST(req: NextRequest) {
     const baseHandle = email.split("@")[0];
     const handle = `${baseHandle}_${data.user.id.slice(0, 6)}`;
 
-    await admin.from("profiles").upsert(
+    const { error: profileError } = await admin.from("profiles").upsert(
       {
         id: data.user.id,
         handle,
@@ -31,8 +39,13 @@ export async function POST(req: NextRequest) {
       { onConflict: "id" }
     );
 
+    if (profileError) {
+      console.error("profile upsert error:", profileError);
+    }
+
     return NextResponse.json({ success: true });
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    const message = err instanceof Error ? err.message : JSON.stringify(err);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

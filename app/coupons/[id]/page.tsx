@@ -21,7 +21,7 @@ const coupons = {
     storeName: "学内カフェ どんぐり",
     offer: "全品10% OFF",
     serialCode: "SC-2024-X82",
-    expires: "2024年7月31日まで",
+    expires: "2026年7月31日まで",
     status: "利用可能",
     qr: "/coupons/qr-cafe.svg",
   },
@@ -29,7 +29,7 @@ const coupons = {
     storeName: "大学生協 書籍カウンター",
     offer: "教科書購入 ¥300 OFF",
     serialCode: "SC-BOOK-7312",
-    expires: "2024年8月15日まで",
+    expires: "2026年8月15日まで",
     status: "利用可能",
     qr: "/coupons/qr-bookstore.svg",
   },
@@ -50,13 +50,13 @@ export default function CouponDisplayPage() {
           <Link
             href="/profile"
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#0056b3] transition hover:bg-slate-50"
-            aria-label="Back to profile"
+            aria-label="プロフィールに戻る"
           >
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Link>
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
-              StudyCycle Reward
+              StudyCycle 特典
             </p>
             <h1 className="text-xl font-black text-slate-950">
               獲得したクーポン
@@ -72,7 +72,7 @@ export default function CouponDisplayPage() {
               <div>
                 <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-white/75">
                   <TicketPercent className="h-4 w-4" aria-hidden="true" />
-                  Digital Coupon
+                  デジタルクーポン
                 </p>
                 <h2 className="mt-4 text-2xl font-black leading-tight">
                   {coupon.offer}
@@ -94,7 +94,7 @@ export default function CouponDisplayPage() {
               <div className="mx-auto grid h-56 w-56 place-items-center rounded-lg border border-slate-200 bg-white p-4">
                 <Image
                   src={coupon.qr}
-                  alt={`${coupon.storeName} coupon QR code`}
+                  alt={`${coupon.storeName} クーポンQRコード`}
                   width={192}
                   height={192}
                   className="h-48 w-48"
@@ -102,14 +102,14 @@ export default function CouponDisplayPage() {
               </div>
               <p className="mt-3 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-slate-500">
                 <QrCode className="h-4 w-4" aria-hidden="true" />
-                QR Redemption
+                QRコードで利用
               </p>
             </div>
 
             <section className="mt-5 rounded-lg border border-blue-100 bg-blue-50 p-4">
               <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[#0056b3]">
                 <Copy className="h-4 w-4" aria-hidden="true" />
-                Serial Code
+                シリアルコード
               </p>
               <p className="mt-3 rounded-lg bg-white px-4 py-3 text-center font-mono text-2xl font-black tracking-[0.12em] text-slate-950">
                 {coupon.serialCode}

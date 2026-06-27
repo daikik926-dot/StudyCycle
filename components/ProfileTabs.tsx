@@ -14,9 +14,9 @@ type BookItem = {
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  available: "Selling",
-  reserved: "Reserved",
-  sold: "Completed",
+  available: "出品中",
+  reserved: "取引中",
+  sold: "取引完了",
 };
 
 export function ProfileTabs({ selling, history }: { selling: BookItem[]; history: BookItem[] }) {
@@ -26,13 +26,13 @@ export function ProfileTabs({ selling, history }: { selling: BookItem[]; history
   return (
     <section className="mt-6 rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="border-b border-slate-200 p-4 sm:p-5">
-        <h2 className="text-lg font-black text-slate-950">My Listings</h2>
+        <h2 className="text-lg font-black text-slate-950">出品リスト</h2>
         <div className="mt-4 grid grid-cols-2 rounded-lg bg-slate-100 p-1">
           <button type="button" onClick={() => setActiveTab("selling")} className={activeTab === "selling" ? "h-10 rounded-md bg-white text-sm font-black text-[#0056b3] shadow-sm" : "h-10 rounded-md text-sm font-black text-slate-500"}>
-            Selling ({selling.length})
+            出品中（{selling.length}）
           </button>
           <button type="button" onClick={() => setActiveTab("history")} className={activeTab === "history" ? "h-10 rounded-md bg-white text-sm font-black text-[#0056b3] shadow-sm" : "h-10 rounded-md text-sm font-black text-slate-500"}>
-            History ({history.length})
+            取引履歴（{history.length}）
           </button>
         </div>
       </div>

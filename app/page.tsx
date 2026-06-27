@@ -1,16 +1,9 @@
-import { GraduationCap, Home, ListPlus, Search, UserRound } from "lucide-react";
+import { GraduationCap, ListPlus, Search } from "lucide-react";
 import Link from "next/link";
 import { StudyCycleLogo } from "@/components/StudyCycleLogo";
 import { TextbookCard } from "@/components/TextbookCard";
 import { textbooks as demoTextbooks, type Textbook } from "@/lib/textbooks";
 import { createClient } from "@/lib/supabase/server";
-
-const tabs = [
-  { label: "Home", icon: Home, href: "/" },
-  { label: "Search", icon: Search, href: "#search" },
-  { label: "List", icon: ListPlus, href: "/listings" },
-  { label: "Profile", icon: UserRound, href: "/profile" },
-];
 
 async function fetchTextbooks(query = ""): Promise<Textbook[]> {
   try {
@@ -73,15 +66,14 @@ export default async function HomePage({
   const textbooks = await fetchTextbooks(query);
 
   return (
-    <main className="min-h-screen bg-paper pb-32 md:pb-0">
+    <main className="min-h-screen bg-paper">
       <nav className="sticky top-0 z-40 border-b border-stone-200 bg-paper/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <Link href="/" className="flex shrink-0 items-center gap-2 text-ink">
             <StudyCycleLogo size={40} className="rounded-lg shadow-sm" />
             <span className="text-xl font-black">StudyCycle</span>
           </Link>
-          <form method="GET" className="relative mx-auto hidden w-full max-w-xl sm:block">
-            <span className="sr-only">Search textbooks</span>
+          <form method="GET" className="relative mx-auto w-full max-w-xl">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-stone-400" aria-hidden="true" />
             <input
               name="q"
@@ -93,23 +85,11 @@ export default async function HomePage({
           </form>
           <Link href="/listings" className="ml-auto inline-flex h-11 shrink-0 items-center gap-2 rounded-lg bg-leaf px-4 text-sm font-bold text-white shadow-sm transition hover:bg-green-700">
             <ListPlus className="h-5 w-5" aria-hidden="true" />
-            <span className="hidden sm:inline">List Textbook</span>
+            <span className="hidden sm:inline">教科書を出品する</span>
           </Link>
-        </div>
-        <div className="px-4 pb-3 sm:hidden">
-          <form method="GET">
-            <label className="relative block">
-              <span className="sr-only">Search textbooks</span>
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-stone-400" aria-hidden="true" />
-              <input
-                name="q"
-                type="search"
-                defaultValue={query}
-                placeholder="授業名・教科書名で探す"
-                className="h-11 w-full rounded-lg border border-stone-200 bg-white pl-12 pr-4 text-sm outline-none focus:border-leaf focus:ring-4 focus:ring-green-100"
-              />
-            </label>
-          </form>
+          <Link href="/profile" className="inline-flex h-11 shrink-0 items-center gap-2 rounded-lg border border-stone-200 bg-white px-4 text-sm font-bold text-stone-700 shadow-sm transition hover:bg-stone-50">
+            マイページ
+          </Link>
         </div>
       </nav>
 
@@ -172,19 +152,6 @@ export default async function HomePage({
           </div>
         )}
       </section>
-
-      <nav
-        className="fixed inset-x-0 bottom-0 z-50 border-t border-stone-200 bg-white/95 px-2 pt-2 shadow-[0_-10px_30px_rgba(31,41,51,0.08)] backdrop-blur md:hidden"
-        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 12px)" }}
-      >
-        <div className="mx-auto grid max-w-md grid-cols-4">
-          {tabs.map(({ label, icon: Icon, href }) => (
-            <Link key={label} href={href} className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg text-xs font-bold text-stone-500 transition hover:bg-mint hover:text-leaf">
-              <Icon className="h-5 w-5" aria-hidden="true" />{label}
-            </Link>
-          ))}
-        </div>
-      </nav>
     </main>
   );
 }

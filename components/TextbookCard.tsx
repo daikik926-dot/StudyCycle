@@ -2,6 +2,7 @@ import Image from "next/image";
 import { BadgeCheck } from "lucide-react";
 import Link from "next/link";
 import type { Textbook } from "@/lib/textbooks";
+import { LikeButton } from "@/components/LikeButton";
 
 type TextbookCardProps = {
   textbook: Textbook;
@@ -35,12 +36,15 @@ export function TextbookCard({ textbook }: TextbookCardProps) {
             {textbook.note}
           </span>
         </div>
-        <Link
-          href={`/textbooks/${textbook.id}`}
-          className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-stone-200 bg-white text-sm font-bold text-ink transition hover:border-leaf hover:bg-mint hover:text-leaf"
-        >
-          詳細を見る
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/textbooks/${textbook.id}`}
+            className="inline-flex h-10 flex-1 items-center justify-center rounded-lg border border-stone-200 bg-white text-sm font-bold text-ink transition hover:border-leaf hover:bg-mint hover:text-leaf"
+          >
+            詳細を見る
+          </Link>
+          <LikeButton textbookId={textbook.id} initialCount={textbook.likesCount ?? 0} />
+        </div>
       </div>
     </article>
   );

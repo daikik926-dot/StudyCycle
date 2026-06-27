@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { rateLimit } from "@/lib/rateLimit";
 
 export async function GET() {
   const supabase = createClient();
@@ -16,6 +17,10 @@ export async function POST(request: NextRequest) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+
+  if (!rateLimit(`textbook:${user.id}`, 10, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "出品は1時間に10件までです" }, { status: 429 });
+  }
 
   const body = await request.json();
   const { isbn, title, author, course, professor, price, condition, has_senior_notes, cover_url } = body;

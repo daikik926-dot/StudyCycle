@@ -133,7 +133,7 @@ export default async function ProfilePage() {
                 取引の安全について
               </h2>
               <p className="mt-2 text-sm font-bold leading-6 text-slate-700">
-                受け渡しは図書館入口、大学生協など学内の公共の場所を推奨します。
+                学内外を問わず、不特定多数の人が集まる場所での受け渡しを推奨いたします。
               </p>
             </div>
             <ChevronRight className="h-5 w-5 shrink-0 text-[#0056b3]" aria-hidden="true" />

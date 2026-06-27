@@ -7,22 +7,30 @@ import { createClient } from "@/lib/supabase/server";
 
 const tabs = [
   { label: "Home", icon: Home, href: "/" },
-  { label: "Search", icon: Search, href: "#" },
+  { label: "Search", icon: Search, href: "#search" },
   { label: "List", icon: ListPlus, href: "/listings" },
   { label: "Profile", icon: UserRound, href: "/profile" },
 ];
 
-async function fetchTextbooks(): Promise<Textbook[]> {
+async function fetchTextbooks(query = ""): Promise<Textbook[]> {
   try {
     const supabase = createClient();
-    const { data, error } = await supabase
+    let dbQuery = supabase
       .from("textbooks")
       .select(`id, title, author, course, professor, price, cover_url, has_senior_notes, condition, profiles!seller_id (display_name, faculty, year)`)
-      .eq("status", "available")
-      .order("created_at", { ascending: false })
-      .limit(12);
+      .eq("status", "available");
 
-    if (error || !data || data.length === 0) return demoTextbooks;
+    if (query) {
+      dbQuery = dbQuery.or(`title.ilike.%${query}%,author.ilike.%${query}%,course.ilike.%${query}%,professor.ilike.%${query}%`);
+    }
+
+    const { data, error } = await dbQuery
+      .order("created_at", { ascending: false })
+      .limit(24);
+
+    if (error || !data || data.length === 0) {
+      return filterDemo(demoTextbooks, query);
+    }
 
     return data.map((row) => {
       const p = (Array.isArray(row.profiles) ? row.profiles[0] : row.profiles) as { display_name: string; faculty: string | null; year: number | null } | null;
@@ -40,80 +48,138 @@ async function fetchTextbooks(): Promise<Textbook[]> {
       };
     });
   } catch {
-    return demoTextbooks;
+    return filterDemo(demoTextbooks, query);
   }
 }
 
-export default async function HomePage() {
-  const textbooks = await fetchTextbooks();
+function filterDemo(books: Textbook[], query: string): Textbook[] {
+  if (!query) return books;
+  const q = query.toLowerCase();
+  return books.filter(
+    (b) =>
+      b.title.toLowerCase().includes(q) ||
+      b.author.toLowerCase().includes(q) ||
+      b.course.toLowerCase().includes(q) ||
+      b.professor.toLowerCase().includes(q)
+  );
+}
+
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams?: { q?: string };
+}) {
+  const query = searchParams?.q ?? "";
+  const textbooks = await fetchTextbooks(query);
 
   return (
-    <main className="min-h-screen bg-paper pb-24 md:pb-0">
+    <main className="min-h-screen bg-paper pb-32 md:pb-0">
       <nav className="sticky top-0 z-40 border-b border-stone-200 bg-paper/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <Link href="/" className="flex shrink-0 items-center gap-2 text-ink">
             <StudyCycleLogo size={40} className="rounded-lg shadow-sm" />
             <span className="text-xl font-black">StudyCycle</span>
           </Link>
-          <label className="relative mx-auto hidden w-full max-w-xl sm:block">
+          <form method="GET" className="relative mx-auto hidden w-full max-w-xl sm:block">
             <span className="sr-only">Search textbooks</span>
             <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-stone-400" aria-hidden="true" />
-            <input type="search" placeholder="授業名・教科書名で探す" className="h-11 w-full rounded-lg border border-stone-200 bg-white pl-12 pr-4 text-sm outline-none transition placeholder:text-stone-400 focus:border-leaf focus:ring-4 focus:ring-green-100" />
-          </label>
+            <input
+              name="q"
+              type="search"
+              defaultValue={query}
+              placeholder="授業名・教科書名・著者名で探す"
+              className="h-11 w-full rounded-lg border border-stone-200 bg-white pl-12 pr-4 text-sm outline-none transition placeholder:text-stone-400 focus:border-leaf focus:ring-4 focus:ring-green-100"
+            />
+          </form>
           <Link href="/listings" className="ml-auto inline-flex h-11 shrink-0 items-center gap-2 rounded-lg bg-leaf px-4 text-sm font-bold text-white shadow-sm transition hover:bg-green-700">
             <ListPlus className="h-5 w-5" aria-hidden="true" />
             <span className="hidden sm:inline">List Textbook</span>
           </Link>
         </div>
         <div className="px-4 pb-3 sm:hidden">
-          <label className="relative block">
-            <span className="sr-only">Search textbooks</span>
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-stone-400" aria-hidden="true" />
-            <input type="search" placeholder="授業名・教科書名で探す" className="h-11 w-full rounded-lg border border-stone-200 bg-white pl-12 pr-4 text-sm outline-none focus:border-leaf focus:ring-4 focus:ring-green-100" />
-          </label>
+          <form method="GET">
+            <label className="relative block">
+              <span className="sr-only">Search textbooks</span>
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-stone-400" aria-hidden="true" />
+              <input
+                name="q"
+                type="search"
+                defaultValue={query}
+                placeholder="授業名・教科書名で探す"
+                className="h-11 w-full rounded-lg border border-stone-200 bg-white pl-12 pr-4 text-sm outline-none focus:border-leaf focus:ring-4 focus:ring-green-100"
+              />
+            </label>
+          </form>
         </div>
       </nav>
 
-      <section className="border-b border-stone-200 bg-[linear-gradient(135deg,#fbfaf6_0%,#e7f7ef_48%,#fff7d8_100%)]">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[1.1fr_0.9fr] md:items-center md:py-16 lg:px-8">
-          <div>
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-green-200 bg-white/80 px-4 py-2 text-sm font-bold text-leaf">
-              <GraduationCap className="h-4 w-4" aria-hidden="true" />University Textbook Exchange
+      {!query && (
+        <section className="border-b border-stone-200 bg-[linear-gradient(135deg,#fbfaf6_0%,#e7f7ef_48%,#fff7d8_100%)]">
+          <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[1.1fr_0.9fr] md:items-center md:py-16 lg:px-8">
+            <div>
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-green-200 bg-white/80 px-4 py-2 text-sm font-bold text-leaf">
+                <GraduationCap className="h-4 w-4" aria-hidden="true" />University Textbook Exchange
+              </div>
+              <h1 className="max-w-3xl text-4xl font-black leading-tight text-ink sm:text-5xl lg:text-6xl">学内で教科書を探す・譲る。</h1>
+              <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-600 sm:text-xl">授業にひもづいた教科書と先輩メモを、安心できる学内取引で受け継げます。</p>
             </div>
-            <h1 className="max-w-3xl text-4xl font-black leading-tight text-ink sm:text-5xl lg:text-6xl">学内で教科書を探す・譲る。</h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-600 sm:text-xl">授業にひもづいた教科書と先輩メモを、安心できる学内取引で受け継げます。</p>
-          </div>
-          <div className="relative min-h-72 overflow-hidden rounded-lg border border-stone-200 bg-white shadow-soft">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_15%,#b9efd1_0,transparent_28%),radial-gradient(circle_at_78%_75%,#f8e79c_0,transparent_26%)]" />
-            <div className="relative grid h-full min-h-72 place-items-center p-8">
-              <div className="grid w-full max-w-sm grid-cols-3 gap-3">
-                {textbooks.slice(0, 6).map((book) => (
-                  <div key={book.id} className="aspect-[3/4] overflow-hidden rounded-md border border-stone-200 bg-white shadow-md">
-                    <img src={book.cover} alt="" className="h-full w-full object-cover" />
-                  </div>
-                ))}
+            <div className="relative min-h-72 overflow-hidden rounded-lg border border-stone-200 bg-white shadow-soft">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_15%,#b9efd1_0,transparent_28%),radial-gradient(circle_at_78%_75%,#f8e79c_0,transparent_26%)]" />
+              <div className="relative grid h-full min-h-72 place-items-center p-8">
+                <div className="grid w-full max-w-sm grid-cols-3 gap-3">
+                  {textbooks.slice(0, 6).map((book) => (
+                    <div key={book.id} className="aspect-[3/4] overflow-hidden rounded-md border border-stone-200 bg-white shadow-md">
+                      <img src={book.cover} alt="" className="h-full w-full object-cover" />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-black text-ink sm:text-3xl">今週のおすすめ教科書</h2>
-            <p className="mt-2 text-sm text-stone-500">メモ付きの出品から、次の履修にすぐ使える一冊を。</p>
+            {query ? (
+              <>
+                <h2 className="text-2xl font-black text-ink sm:text-3xl">「{query}」の検索結果</h2>
+                <p className="mt-2 text-sm text-stone-500">{textbooks.length}件見つかりました</p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl font-black text-ink sm:text-3xl">今週のおすすめ教科書</h2>
+                <p className="mt-2 text-sm text-stone-500">メモ付きの出品から、次の履修にすぐ使える一冊を。</p>
+              </>
+            )}
           </div>
+          {query && (
+            <Link href="/" className="text-sm text-stone-500 underline hover:text-ink">
+              すべて表示
+            </Link>
+          )}
         </div>
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {textbooks.map((textbook) => (<TextbookCard key={textbook.id} textbook={textbook} />))}
-        </div>
+        {textbooks.length === 0 ? (
+          <div className="py-20 text-center text-stone-400">
+            <Search className="mx-auto mb-4 h-12 w-12 opacity-30" />
+            <p className="text-lg font-bold">「{query}」に一致する教科書が見つかりませんでした</p>
+            <p className="mt-2 text-sm">別のキーワードで試してみてください</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {textbooks.map((textbook) => (<TextbookCard key={textbook.id} textbook={textbook} />))}
+          </div>
+        )}
       </section>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-stone-200 bg-white/95 px-2 pt-2 shadow-[0_-10px_30px_rgba(31,41,51,0.08)] backdrop-blur md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <nav
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-stone-200 bg-white/95 px-2 pt-2 shadow-[0_-10px_30px_rgba(31,41,51,0.08)] backdrop-blur md:hidden"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 12px)" }}
+      >
         <div className="mx-auto grid max-w-md grid-cols-4">
           {tabs.map(({ label, icon: Icon, href }) => (
-            <Link key={label} href={href} className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-lg text-xs font-bold text-stone-500 transition hover:bg-mint hover:text-leaf">
+            <Link key={label} href={href} className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg text-xs font-bold text-stone-500 transition hover:bg-mint hover:text-leaf">
               <Icon className="h-5 w-5" aria-hidden="true" />{label}
             </Link>
           ))}

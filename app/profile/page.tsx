@@ -118,7 +118,7 @@ export default async function ProfilePage() {
             </span>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <Coupon href="/coupons/cafe-10" title="カフィー 10% OFF" code="SC-CAFE-2048" expires="2026/06/30" />
+            <Coupon href="/coupons/cafe-10" title="学内コーヒーショップ 10% OFF" code="SC-CAFE-2048" expires="2026/06/30" />
             <Coupon href="/coupons/bookstore-300" title="生協書籍 ¥300 OFF" code="SC-BOOK-7312" expires="2026/07/15" />
           </div>
         </section>

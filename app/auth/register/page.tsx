@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GraduationCap, Lock, Mail, UserRound } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { StudyCycleLogo } from "@/components/StudyCycleLogo";
 
 export default function RegisterPage() {
@@ -27,22 +26,23 @@ export default function RegisterPage() {
       return;
     }
     setLoading(true);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { display_name: displayName } },
-    });
-    if (error) {
-      if (error.message === "User already registered") {
-        setError("このメールアドレスはすでに登録されています。");
-      } else {
-        setError(`登録エラー: ${error.message}`);
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, displayName }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(`登録エラー: ${json.error}`);
+        setLoading(false);
+        return;
       }
+      router.push("/auth/verify");
+    } catch (err) {
+      setError(`通信エラー: ${String(err)}`);
       setLoading(false);
-      return;
     }
-    router.push("/auth/verify");
   }
 
   return (

@@ -9,6 +9,7 @@ export type Textbook = {
   note: string;
   condition: string;
   seller: string;
+  likesCount?: number;
 };
 
 export const textbooks: Textbook[] = [
@@ -23,6 +24,7 @@ export const textbooks: Textbook[] = [
     note: "Senior's Note",
     condition: "書き込み少なめ。試験対策メモ付き。",
     seller: "経済学部 3年",
+    likesCount: 0,
   },
   {
     id: "organic-chemistry",
@@ -35,6 +37,7 @@ export const textbooks: Textbook[] = [
     note: "Senior's Note",
     condition: "表紙に軽い使用感あり。重要反応のメモ付き。",
     seller: "理学部 4年",
+    likesCount: 0,
   },
   {
     id: "sociology",
@@ -47,6 +50,7 @@ export const textbooks: Textbook[] = [
     note: "Senior's Note",
     condition: "良好。講義ノートの要点メモ付き。",
     seller: "文学部 2年",
+    likesCount: 0,
   },
   {
     id: "statistics",
@@ -59,6 +63,7 @@ export const textbooks: Textbook[] = [
     note: "Senior's Note",
     condition: "一部マーカーあり。演習問題の解き方メモ付き。",
     seller: "情報学部 3年",
+    likesCount: 0,
   },
   {
     id: "psychology",
@@ -71,6 +76,7 @@ export const textbooks: Textbook[] = [
     note: "Senior's Note",
     condition: "状態良好。試験頻出テーマのメモ付き。",
     seller: "教育学部 4年",
+    likesCount: 0,
   },
   {
     id: "international-law",
@@ -83,6 +89,7 @@ export const textbooks: Textbook[] = [
     note: "Senior's Note",
     condition: "ケース判例に付箋あり。期末対策メモ付き。",
     seller: "法学部 3年",
+    likesCount: 0,
   },
 ];
 

@@ -2,27 +2,35 @@ import { GraduationCap, ListPlus, Search } from "lucide-react";
 import Link from "next/link";
 import { StudyCycleLogo } from "@/components/StudyCycleLogo";
 import { TextbookCard } from "@/components/TextbookCard";
+import { SortSelector } from "@/components/SortSelector";
 import { textbooks as demoTextbooks, type Textbook } from "@/lib/textbooks";
 import { createClient } from "@/lib/supabase/server";
 
-async function fetchTextbooks(query = ""): Promise<Textbook[]> {
+type SortKey = "newest" | "price_asc" | "price_desc" | "likes";
+
+async function fetchTextbooks(query = "", sort: SortKey = "newest"): Promise<Textbook[]> {
   try {
     const supabase = createClient();
     let dbQuery = supabase
       .from("textbooks")
-      .select(`id, title, author, course, professor, price, cover_url, has_senior_notes, condition, profiles!seller_id (display_name, faculty, year)`)
+      .select(`id, title, author, course, professor, price, cover_url, has_senior_notes, condition, likes_count, profiles!seller_id (display_name, faculty, year)`)
       .eq("status", "available");
 
     if (query) {
       dbQuery = dbQuery.or(`title.ilike.%${query}%,author.ilike.%${query}%,course.ilike.%${query}%,professor.ilike.%${query}%`);
     }
 
-    const { data, error } = await dbQuery
-      .order("created_at", { ascending: false })
-      .limit(24);
+    switch (sort) {
+      case "price_asc": dbQuery = dbQuery.order("price", { ascending: true }); break;
+      case "price_desc": dbQuery = dbQuery.order("price", { ascending: false }); break;
+      case "likes": dbQuery = dbQuery.order("likes_count", { ascending: false }); break;
+      default: dbQuery = dbQuery.order("created_at", { ascending: false });
+    }
+
+    const { data, error } = await dbQuery.limit(24);
 
     if (error || !data || data.length === 0) {
-      return filterDemo(demoTextbooks, query);
+      return sortAndFilter(demoTextbooks, query, sort);
     }
 
     return data.map((row) => {
@@ -38,32 +46,43 @@ async function fetchTextbooks(query = ""): Promise<Textbook[]> {
         note: row.has_senior_notes ? "Senior's Note" : "",
         condition: row.condition ?? "",
         seller: p ? `${p.faculty ?? ""} ${p.year ? p.year + "年" : ""}`.trim() : "",
+        likesCount: row.likes_count ?? 0,
       };
     });
   } catch {
-    return filterDemo(demoTextbooks, query);
+    return sortAndFilter(demoTextbooks, query, sort);
   }
 }
 
-function filterDemo(books: Textbook[], query: string): Textbook[] {
-  if (!query) return books;
-  const q = query.toLowerCase();
-  return books.filter(
-    (b) =>
-      b.title.toLowerCase().includes(q) ||
-      b.author.toLowerCase().includes(q) ||
-      b.course.toLowerCase().includes(q) ||
-      b.professor.toLowerCase().includes(q)
-  );
+function sortAndFilter(books: Textbook[], query: string, sort: SortKey): Textbook[] {
+  let result = books;
+  if (query) {
+    const q = query.toLowerCase();
+    result = result.filter(
+      (b) => b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q) ||
+             b.course.toLowerCase().includes(q) || b.professor.toLowerCase().includes(q)
+    );
+  }
+  switch (sort) {
+    case "price_asc": return [...result].sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
+    case "price_desc": return [...result].sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
+    case "likes": return [...result].sort((a, b) => (b.likesCount ?? 0) - (a.likesCount ?? 0));
+    default: return result;
+  }
+}
+
+function parsePrice(price: string): number {
+  return parseInt(price.replace(/[¥,]/g, ""), 10) || 0;
 }
 
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams?: { q?: string };
+  searchParams?: { q?: string; sort?: string };
 }) {
   const query = searchParams?.q ?? "";
-  const textbooks = await fetchTextbooks(query);
+  const sort = (searchParams?.sort ?? "newest") as SortKey;
+  const textbooks = await fetchTextbooks(query, sort);
 
   return (
     <main className="min-h-screen bg-paper">
@@ -101,7 +120,7 @@ export default async function HomePage({
                 <GraduationCap className="h-4 w-4" aria-hidden="true" />University Textbook Exchange
               </div>
               <h1 className="max-w-3xl text-4xl font-black leading-tight text-ink sm:text-5xl lg:text-6xl">学内で教科書を探す・譲る。</h1>
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-600 sm:text-xl">授業にひもづいた教科書と先輩メモを、安心できる学内取引で受け継げます。</p>
+              <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-600 sm:text-xl">授業にひもづいた教科書と先輩メモを、安心できる取引で受け継げます。</p>
             </div>
             <div className="relative min-h-72 overflow-hidden rounded-lg border border-stone-200 bg-white shadow-soft">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_15%,#b9efd1_0,transparent_28%),radial-gradient(circle_at_78%_75%,#f8e79c_0,transparent_26%)]" />
@@ -120,7 +139,7 @@ export default async function HomePage({
       )}
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-end justify-between gap-4">
+        <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             {query ? (
               <>
@@ -129,16 +148,17 @@ export default async function HomePage({
               </>
             ) : (
               <>
-                <h2 className="text-2xl font-black text-ink sm:text-3xl">今週のおすすめ教科書</h2>
+                <h2 className="text-2xl font-black text-ink sm:text-3xl">出品中の教科書</h2>
                 <p className="mt-2 text-sm text-stone-500">メモ付きの出品から、次の履修にすぐ使える一冊を。</p>
               </>
             )}
           </div>
-          {query && (
-            <Link href="/" className="text-sm text-stone-500 underline hover:text-ink">
-              すべて表示
-            </Link>
-          )}
+          <div className="flex items-center gap-3">
+            <SortSelector currentSort={sort} />
+            {query && (
+              <Link href="/" className="text-sm text-stone-500 underline hover:text-ink">すべて表示</Link>
+            )}
+          </div>
         </div>
         {textbooks.length === 0 ? (
           <div className="py-20 text-center text-stone-400">

@@ -34,7 +34,11 @@ export default function RegisterPage() {
       options: { data: { display_name: displayName } },
     });
     if (error) {
-      setError(error.message === "User already registered" ? "このメールアドレスはすでに登録されています。" : "登録に失敗しました。もう一度お試しください。");
+      if (error.message === "User already registered") {
+        setError("このメールアドレスはすでに登録されています。");
+      } else {
+        setError(`登録エラー: ${error.message}`);
+      }
       setLoading(false);
       return;
     }
@@ -70,7 +74,7 @@ export default function RegisterPage() {
             </button>
           </form>
           <p className="mt-6 text-center text-sm font-bold text-stone-500">
-            すでにアカウントをお持ちの方は{" "}
+            すでにアカウントをお持ちの方は{" "}
             <Link href="/auth/login" className="text-leaf hover:underline">ログイン</Link>
           </p>
         </div>

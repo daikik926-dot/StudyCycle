@@ -43,31 +43,43 @@ export async function generateStaticParams() {
   return textbooks.map((textbook) => ({ id: textbook.id }));
 }
 
+const DEFAULT_COVER = "/covers/economics.svg";
+
 export default async function TextbookDetailPage({
   params,
 }: {
   params: { id: string };
 }) {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const dbTextbook = await fetchTextbook(params.id);
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {
+    user = null;
+  }
 
+  const dbTextbook = await fetchTextbook(params.id);
   const demo = getTextbook(params.id);
   if (!dbTextbook && !demo) notFound();
 
   const isSeller = !!(dbTextbook && user && dbTextbook.seller_id === user.id);
 
-  const title = dbTextbook?.title ?? demo!.title;
-  const author = dbTextbook?.author ?? demo!.author;
-  const course = dbTextbook?.course ?? demo!.course;
-  const professor = dbTextbook?.professor ?? demo!.professor;
-  const priceRaw = dbTextbook ? `¥${dbTextbook.price.toLocaleString()}` : demo!.price;
-  const condition = dbTextbook?.condition ?? demo!.condition;
-  const coverSrc = dbTextbook?.cover_url ?? demo!.cover;
+  // DBの教科書を優先し、無ければデモデータを使う。どちらでも安全に値を取り出す。
+  const title = dbTextbook?.title ?? demo?.title ?? "教科書";
+  const author = dbTextbook?.author ?? demo?.author ?? "";
+  const course = dbTextbook?.course ?? demo?.course ?? "";
+  const professor = dbTextbook?.professor ?? demo?.professor ?? "";
+  const priceRaw = dbTextbook
+    ? `¥${dbTextbook.price.toLocaleString()}`
+    : demo?.price ?? "";
+  const condition = dbTextbook?.condition ?? demo?.condition ?? "";
+  const coverSrc = dbTextbook?.cover_url || demo?.cover || DEFAULT_COVER;
   const hasSeniorNotes = dbTextbook?.has_senior_notes ?? true;
+  const status = dbTextbook?.status ?? "available";
   const sellerLabel = dbTextbook?.profiles
     ? `${dbTextbook.profiles.faculty ?? ""} ${dbTextbook.profiles.year ? dbTextbook.profiles.year + "年" : ""}`.trim()
-    : demo!.seller;
+    : demo?.seller ?? "";
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -136,7 +148,7 @@ export default async function TextbookDetailPage({
             <MessageSquare className="h-5 w-5" aria-hidden="true" />
             この教科書についてチャットする
           </Link>
-          {isSeller && dbTextbook?.status !== "sold" && (
+          {isSeller && status !== "sold" && (
             <CompleteTransactionButton textbookId={params.id} />
           )}
         </section>

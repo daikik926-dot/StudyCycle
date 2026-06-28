@@ -11,7 +11,7 @@ export default function ListingsPage() {
           <Link
             href="/"
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#0056b3] transition hover:bg-slate-50"
-            aria-label="Back to home"
+            aria-label="ホームに戻る"
           >
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Link>
@@ -19,7 +19,7 @@ export default function ListingsPage() {
             <StudyCycleLogo size={40} className="rounded-lg shadow-sm" />
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                StudyCycle Listings
+                StudyCycle 出品
               </p>
               <h1 className="text-xl font-black text-slate-950 sm:text-2xl">
                 教科書を出品する

@@ -1,7 +1,6 @@
 import {
   GraduationCap,
   ListPlus,
-  Search,
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -9,22 +8,31 @@ import { StudyCycleLogo } from "@/components/StudyCycleLogo";
 import { TextbookCard } from "@/components/TextbookCard";
 import { textbooks as demoTextbooks, type Textbook } from "@/lib/textbooks";
 import { createClient } from "@/lib/supabase/server";
+import { SearchBar } from "@/components/SearchBar";
 
-async function fetchTextbooks(): Promise<Textbook[]> {
+async function fetchTextbooks(query: string): Promise<Textbook[]> {
   try {
     const supabase = createClient();
-    const { data, error } = await supabase
+    let q = supabase
       .from("textbooks")
       .select(`
         id, title, author, course, professor, price,
-        cover_url, has_senior_notes, condition,
+        cover_url, has_senior_notes, condition, likes_count,
         profiles!seller_id (display_name, faculty, year)
       `)
       .eq("status", "available")
       .order("created_at", { ascending: false })
       .limit(12);
 
-    if (error || !data || data.length === 0) return demoTextbooks;
+    if (query) {
+      q = q.or(`title.ilike.%${query}%,course.ilike.%${query}%,author.ilike.%${query}%`);
+    }
+
+    const { data, error } = await q;
+
+    if (error || !data || data.length === 0) {
+      return filterDemo(demoTextbooks, query);
+    }
 
     return data.map((row) => {
       const p = (Array.isArray(row.profiles) ? row.profiles[0] : row.profiles) as { display_name: string; faculty: string | null; year: number | null } | null;
@@ -36,18 +44,35 @@ async function fetchTextbooks(): Promise<Textbook[]> {
         professor: row.professor ?? "",
         price: `¥${(row.price as number).toLocaleString()}`,
         cover: row.cover_url ?? "/covers/economics.svg",
-        note: row.has_senior_notes ? "Senior's Note" : "",
+        note: row.has_senior_notes ? "先輩メモ付き" : "",
         condition: row.condition ?? "",
         seller: p ? `${p.faculty ?? ""} ${p.year ? p.year + "年" : ""}`.trim() : "",
+        likesCount: row.likes_count ?? 0,
       };
     });
   } catch {
-    return demoTextbooks;
+    return filterDemo(demoTextbooks, query);
   }
 }
 
-export default async function HomePage() {
-  const textbooks = await fetchTextbooks();
+function filterDemo(books: Textbook[], query: string): Textbook[] {
+  if (!query) return books;
+  const q = query.toLowerCase();
+  return books.filter(
+    (b) =>
+      b.title.toLowerCase().includes(q) ||
+      b.course.toLowerCase().includes(q) ||
+      b.author.toLowerCase().includes(q)
+  );
+}
+
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams?: { q?: string };
+}) {
+  const query = searchParams?.q ?? "";
+  const textbooks = await fetchTextbooks(query);
 
   return (
     <main className="min-h-screen bg-paper">
@@ -58,18 +83,7 @@ export default async function HomePage() {
             <span className="text-xl font-black">StudyCycle</span>
           </Link>
 
-          <label className="relative mx-auto hidden w-full max-w-xl sm:block">
-            <span className="sr-only">Search textbooks</span>
-            <Search
-              className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-stone-400"
-              aria-hidden="true"
-            />
-            <input
-              type="search"
-              placeholder="授業名・教科書名で探す"
-              className="h-11 w-full rounded-lg border border-stone-200 bg-white pl-12 pr-4 text-sm outline-none transition placeholder:text-stone-400 focus:border-leaf focus:ring-4 focus:ring-green-100"
-            />
-          </label>
+          <SearchBar className="relative mx-auto hidden w-full max-w-xl sm:block" />
 
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <Link
@@ -89,18 +103,7 @@ export default async function HomePage() {
           </div>
         </div>
         <div className="px-4 pb-3 sm:hidden">
-          <label className="relative block">
-            <span className="sr-only">Search textbooks</span>
-            <Search
-              className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-stone-400"
-              aria-hidden="true"
-            />
-            <input
-              type="search"
-              placeholder="授業名・教科書名で探す"
-              className="h-11 w-full rounded-lg border border-stone-200 bg-white pl-12 pr-4 text-sm outline-none focus:border-leaf focus:ring-4 focus:ring-green-100"
-            />
-          </label>
+          <SearchBar />
         </div>
       </nav>
 
@@ -109,13 +112,13 @@ export default async function HomePage() {
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-green-200 bg-white/80 px-4 py-2 text-sm font-bold text-leaf">
               <GraduationCap className="h-4 w-4" aria-hidden="true" />
-              University Textbook Exchange
+              大学生向け教科書フリマ
             </div>
             <h1 className="max-w-3xl text-4xl font-black leading-tight text-ink sm:text-5xl lg:text-6xl">
               学内で教科書を探す・譲る。
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-600 sm:text-xl">
-              授業にひもづいた教科書と先輩メモを、安心できる学内取引で受け継げます。
+              授業にひもづいた教科書と先輩メモを、安心できる学内取引で受け継ぎます。
             </p>
           </div>
           <div className="relative min-h-72 overflow-hidden rounded-lg border border-stone-200 bg-white shadow-soft">
@@ -139,19 +142,28 @@ export default async function HomePage() {
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-black text-ink sm:text-3xl">今週のおすすめ教科書</h2>
+            <h2 className="text-2xl font-black text-ink sm:text-3xl">
+              {query ? `「${query}」の検索結果` : "今週のおすすめ教科書"}
+            </h2>
             <p className="mt-2 text-sm text-stone-500">
-              メモ付きの出品から、次の履修にすぐ使える一冊を。
+              {query
+                ? `${textbooks.length}件見つかりました`
+                : "メモ付きの出品から、次の履修にすぐ使える一冊を。"}
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {textbooks.map((textbook) => (
-            <TextbookCard key={textbook.id} textbook={textbook} />
-          ))}
-        </div>
+        {textbooks.length === 0 ? (
+          <p className="py-16 text-center text-sm font-bold text-stone-400">
+            「{query}」に一致する教科書が見つかりませんでした。
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {textbooks.map((textbook) => (
+              <TextbookCard key={textbook.id} textbook={textbook} />
+            ))}
+          </div>
+        )}
       </section>
-
     </main>
   );
 }

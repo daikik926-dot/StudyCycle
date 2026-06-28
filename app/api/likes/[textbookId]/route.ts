@@ -18,8 +18,20 @@ function getSupabase() {
   );
 }
 
+function diagnoseEnv(): string | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    return `環境変数チェック: URL=${url ? `あり(${url.length}文字)` : "なし"}, KEY=${key ? `あり(${key.length}文字)` : "なし"}`;
+  }
+  return null;
+}
+
 export async function POST(_req: NextRequest, { params }: { params: { textbookId: string } }) {
   try {
+    const envError = diagnoseEnv();
+    if (envError) return NextResponse.json({ error: envError }, { status: 500 });
+
     const supabase = getSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "ログインが必要です" }, { status: 401 });
@@ -39,6 +51,9 @@ export async function POST(_req: NextRequest, { params }: { params: { textbookId
 
 export async function DELETE(_req: NextRequest, { params }: { params: { textbookId: string } }) {
   try {
+    const envError = diagnoseEnv();
+    if (envError) return NextResponse.json({ error: envError }, { status: 500 });
+
     const supabase = getSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "ログインが必要です" }, { status: 401 });

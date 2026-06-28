@@ -38,7 +38,7 @@ async function fetchTextbook(id: string): Promise<TextbookRow | null> {
       .eq("id", id)
       .single();
     if (error) return null;
-    return data as TextbookRow | null;
+    return data as unknown as TextbookRow | null;
   } catch {
     return null;
   }

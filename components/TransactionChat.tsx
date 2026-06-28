@@ -38,9 +38,9 @@ export function TransactionChat({ textbookId, textbookTitle, textbookPrice, text
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const templates = useMemo(() => [
-    `I'm ${handleName || "[Handle Name]"} from ${major || "[Major]"}, interested in this book.`,
-    `${major || "[Major]"}の${handleName || "[Handle Name]"}です。この教科書を購入希望です。`,
+    `${major || "（学部）"}の${handleName || "（ハンドル名）"}です。この教科書を購入希望です。`,
     `${textbookCourse}で使用するため、${textbookTitle}について受け渡し可能日を相談したいです。`,
+    `${major || "（学部）"}の${handleName || "（ハンドル名）"}です。状態について詳しく教えていただけますか？`,
   ], [handleName, major, textbookCourse, textbookTitle]);
 
   const canSendTemplate = handleName.trim().length > 0 && major.trim().length > 0;
@@ -56,6 +56,11 @@ export function TransactionChat({ textbookId, textbookTitle, textbookPrice, text
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
       });
+      if (res.status === 401) {
+        // 未ログインのまま送信＝取引開始のタイミングでログインへ案内
+        window.location.href = `/auth/login?redirectTo=/textbooks/${textbookId}/chat`;
+        return;
+      }
       if (!res.ok) {
         const { error: apiError } = await res.json();
         setError(apiError ?? "送信に失敗しました。");
@@ -96,11 +101,11 @@ export function TransactionChat({ textbookId, textbookTitle, textbookPrice, text
           {error && <div className="mb-3 rounded-lg bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</div>}
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
-              <span className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500"><UserRound className="h-4 w-4" aria-hidden="true" />Handle Name</span>
+              <span className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500"><UserRound className="h-4 w-4" aria-hidden="true" />ハンドル名</span>
               <input value={handleName} onChange={(e) => setHandleName(e.target.value)} placeholder="例: econ_student" className="mt-2 h-11 w-full rounded-lg border border-slate-300 px-3 text-sm font-bold outline-none focus:border-[#0056b3] focus:ring-4 focus:ring-blue-100" />
             </label>
             <label className="block">
-              <span className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500"><ShieldCheck className="h-4 w-4" aria-hidden="true" />Major</span>
+              <span className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500"><ShieldCheck className="h-4 w-4" aria-hidden="true" />学部</span>
               <input value={major} onChange={(e) => setMajor(e.target.value)} placeholder="例: 経済学部" className="mt-2 h-11 w-full rounded-lg border border-slate-300 px-3 text-sm font-bold outline-none focus:border-[#0056b3] focus:ring-4 focus:ring-blue-100" />
             </label>
           </div>
@@ -130,8 +135,8 @@ export function TransactionChat({ textbookId, textbookTitle, textbookPrice, text
           </div>
         </section>
         <section className="rounded-lg border border-blue-100 bg-blue-50 p-4">
-          <h2 className="flex items-center gap-2 text-sm font-black text-[#0056b3]"><ShieldCheck className="h-4 w-4" aria-hidden="true" />Recommended meetup spots</h2>
-          <p className="mt-2 text-sm font-black leading-6 text-slate-700">Library entrance, Univ. Co-op</p>
+          <h2 className="flex items-center gap-2 text-sm font-black text-[#0056b3]"><ShieldCheck className="h-4 w-4" aria-hidden="true" />おすすめの受け渡し場所</h2>
+          <p className="mt-2 text-sm font-black leading-6 text-slate-700">図書館入口・大学生協など、不特定多数が集まる公共の場所を推奨します。</p>
         </section>
       </aside>
     </div>

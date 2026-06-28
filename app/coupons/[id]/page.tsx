@@ -1,11 +1,8 @@
-"use client";
-
 import {
   ArrowLeft,
   BadgeCheck,
   CalendarDays,
   CheckCircle2,
-  Copy,
   QrCode,
   ReceiptText,
   ShieldCheck,
@@ -14,14 +11,23 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound, useParams } from "next/navigation";
+import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 
-const coupons = {
+const COUPON_META: Record<string, { label: string; offer: string }> = {
+  "cafe-10": { label: "学内カフェ どんぐり", offer: "全品10% OFF" },
+  "bookstore-300": { label: "大学生協 書籍カウンター", offer: "教科書購入 ¥300 OFF" },
+};
+
+const DEMO_COUPONS: Record<string, {
+  storeName: string; offer: string; serialCode: string;
+  expires: string; status: string; qr: string;
+}> = {
   "cafe-10": {
     storeName: "学内カフェ どんぐり",
     offer: "全品10% OFF",
-    serialCode: "SC-2024-X82",
-    expires: "2024年7月31日まで",
+    serialCode: "SC-CAFE-2048",
+    expires: "2026年6朆30日まで",
     status: "利用可能",
     qr: "/coupons/qr-cafe.svg",
   },
@@ -29,19 +35,53 @@ const coupons = {
     storeName: "大学生協 書籍カウンター",
     offer: "教科書購入 ¥300 OFF",
     serialCode: "SC-BOOK-7312",
-    expires: "2024年8月15日まで",
+    expires: "2026年7朆15日まで",
     status: "利用可能",
     qr: "/coupons/qr-bookstore.svg",
   },
-} as const;
+};
 
-export default function CouponDisplayPage() {
-  const params = useParams<{ id: string }>();
-  const coupon = coupons[params.id as keyof typeof coupons];
+export default async function CouponDisplayPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  let coupon: {
+    storeName: string; offer: string; serialCode: string;
+    expires: string; status: string; qr: string;
+  } | null = null;
+
+  try {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("coupons")
+      .select("coupon_type, serial_code, expires_at, is_used")
+      .eq("id", params.id)
+      .single();
+
+    if (data) {
+      const meta = COUPON_META[data.coupon_type];
+      if (meta) {
+        const expiresDate = new Date(data.expires_at);
+        coupon = {
+          storeName: meta.label,
+          offer: meta.offer,
+          serialCode: data.serial_code,
+          expires: expiresDate.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" }) + "まで",
+          status: data.is_used ? "使用済み" : "利用可能",
+          qr: `/coupons/qr-${data.coupon_type}.svg`,
+        };
+      }
+    }
+  } catch {
+    // DBが未設定の場合はデモデータを使用
+  }
 
   if (!coupon) {
-    notFound();
+    coupon = DEMO_COUPONS[params.id] ?? null;
   }
+
+  if (!coupon) notFound();
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -50,17 +90,13 @@ export default function CouponDisplayPage() {
           <Link
             href="/profile"
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#0056b3] transition hover:bg-slate-50"
-            aria-label="Back to profile"
+            aria-label="プロフィールに戻る"
           >
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Link>
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
-              StudyCycle Reward
-            </p>
-            <h1 className="text-xl font-black text-slate-950">
-              獲得したクーポン
-            </h1>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">StudyCycle 特典</p>
+            <h1 className="text-xl font-black text-slate-950">獲得したクーポン</h1>
           </div>
         </div>
       </header>
@@ -72,11 +108,9 @@ export default function CouponDisplayPage() {
               <div>
                 <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-white/75">
                   <TicketPercent className="h-4 w-4" aria-hidden="true" />
-                  Digital Coupon
+                  デジタルクーポン
                 </p>
-                <h2 className="mt-4 text-2xl font-black leading-tight">
-                  {coupon.offer}
-                </h2>
+                <h2 className="mt-4 text-2xl font-black leading-tight">{coupon.offer}</h2>
                 <p className="mt-2 flex items-center gap-2 text-sm font-bold text-white/90">
                   <Store className="h-4 w-4" aria-hidden="true" />
                   {coupon.storeName}
@@ -94,7 +128,7 @@ export default function CouponDisplayPage() {
               <div className="mx-auto grid h-56 w-56 place-items-center rounded-lg border border-slate-200 bg-white p-4">
                 <Image
                   src={coupon.qr}
-                  alt={`${coupon.storeName} coupon QR code`}
+                  alt={`${coupon.storeName} クーポンQRコード`}
                   width={192}
                   height={192}
                   className="h-48 w-48"
@@ -102,15 +136,12 @@ export default function CouponDisplayPage() {
               </div>
               <p className="mt-3 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-slate-500">
                 <QrCode className="h-4 w-4" aria-hidden="true" />
-                QR Redemption
+                QRコードで利用
               </p>
             </div>
 
             <section className="mt-5 rounded-lg border border-blue-100 bg-blue-50 p-4">
-              <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[#0056b3]">
-                <Copy className="h-4 w-4" aria-hidden="true" />
-                Serial Code
-              </p>
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-[#0056b3]">シリアルコード</p>
               <p className="mt-3 rounded-lg bg-white px-4 py-3 text-center font-mono text-2xl font-black tracking-[0.12em] text-slate-950">
                 {coupon.serialCode}
               </p>
@@ -147,15 +178,7 @@ export default function CouponDisplayPage() {
   );
 }
 
-function Instruction({
-  icon,
-  title,
-  body,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  body: string;
-}) {
+function Instruction({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
   return (
     <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-4">
       <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-blue-50 text-[#0056b3]">

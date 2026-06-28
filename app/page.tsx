@@ -34,7 +34,7 @@ async function fetchTextbooks(query: string, sort: string): Promise<Textbook[]> 
     const { data, error } = await q;
 
     if (error || !data || data.length === 0) {
-      return filterDemo(demoTextbooks, query);
+      return filterDemo(demoTextbooks, query, sort);
     }
 
     return data.map((row) => {
@@ -54,19 +54,25 @@ async function fetchTextbooks(query: string, sort: string): Promise<Textbook[]> 
       };
     });
   } catch {
-    return filterDemo(demoTextbooks, query);
+    return filterDemo(demoTextbooks, query, sort);
   }
 }
 
-function filterDemo(books: Textbook[], query: string): Textbook[] {
-  if (!query) return books;
-  const q = query.toLowerCase();
-  return books.filter(
-    (b) =>
-      b.title.toLowerCase().includes(q) ||
-      b.course.toLowerCase().includes(q) ||
-      b.author.toLowerCase().includes(q)
-  );
+function filterDemo(books: Textbook[], query: string, sort: string): Textbook[] {
+  let result = books;
+  if (query) {
+    const q = query.toLowerCase();
+    result = result.filter(
+      (b) =>
+        b.title.toLowerCase().includes(q) ||
+        b.course.toLowerCase().includes(q) ||
+        b.author.toLowerCase().includes(q)
+    );
+  }
+  if (sort === "likes") {
+    result = [...result].sort((a, b) => (b.likesCount ?? 0) - (a.likesCount ?? 0));
+  }
+  return result;
 }
 
 export default async function HomePage({

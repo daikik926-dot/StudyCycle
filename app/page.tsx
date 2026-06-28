@@ -1,6 +1,8 @@
 import {
   GraduationCap,
+  Heart,
   ListPlus,
+  Sparkles,
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -10,9 +12,10 @@ import { textbooks as demoTextbooks, type Textbook } from "@/lib/textbooks";
 import { createClient } from "@/lib/supabase/server";
 import { SearchBar } from "@/components/SearchBar";
 
-async function fetchTextbooks(query: string): Promise<Textbook[]> {
+async function fetchTextbooks(query: string, sort: string): Promise<Textbook[]> {
   try {
     const supabase = createClient();
+    const orderCol = sort === "likes" ? "likes_count" : "created_at";
     let q = supabase
       .from("textbooks")
       .select(`
@@ -21,7 +24,7 @@ async function fetchTextbooks(query: string): Promise<Textbook[]> {
         profiles!seller_id (display_name, faculty, year)
       `)
       .eq("status", "available")
-      .order("created_at", { ascending: false })
+      .order(orderCol, { ascending: false })
       .limit(12);
 
     if (query) {
@@ -69,10 +72,11 @@ function filterDemo(books: Textbook[], query: string): Textbook[] {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams?: { q?: string };
+  searchParams?: { q?: string; sort?: string };
 }) {
   const query = searchParams?.q ?? "";
-  const textbooks = await fetchTextbooks(query);
+  const sort = searchParams?.sort ?? "new";
+  const textbooks = await fetchTextbooks(query, sort);
 
   return (
     <main className="min-h-screen bg-paper">
@@ -118,7 +122,7 @@ export default async function HomePage({
               学内で教科書を探す・譲る。
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-600 sm:text-xl">
-              授業にひもづいた教科書と先輩メモを、安心できる学内取引で受け継ぎます。
+              授業にひもづいた教科書と先輩メモを、安心できる学内取引で受け継げます。
             </p>
           </div>
           <div className="relative min-h-72 overflow-hidden rounded-lg border border-stone-200 bg-white shadow-soft">
@@ -140,7 +144,7 @@ export default async function HomePage({
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-end justify-between gap-4">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h2 className="text-2xl font-black text-ink sm:text-3xl">
               {query ? `「${query}」の検索結果` : "今週のおすすめ教科書"}
@@ -150,6 +154,22 @@ export default async function HomePage({
                 ? `${textbooks.length}件見つかりました`
                 : "メモ付きの出品から、次の履修にすぐ使える一冊を。"}
             </p>
+          </div>
+          <div className="flex gap-2">
+            <Link
+              href={`/?${query ? `q=${encodeURIComponent(query)}&` : ""}sort=new`}
+              className={`inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-bold transition ${sort !== "likes" ? "border-leaf bg-leaf text-white" : "border-stone-200 bg-white text-stone-600 hover:border-leaf hover:text-leaf"}`}
+            >
+              <Sparkles className="h-4 w-4" aria-hidden="true" />
+              新着順
+            </Link>
+            <Link
+              href={`/?${query ? `q=${encodeURIComponent(query)}&` : ""}sort=likes`}
+              className={`inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-bold transition ${sort === "likes" ? "border-leaf bg-leaf text-white" : "border-stone-200 bg-white text-stone-600 hover:border-leaf hover:text-leaf"}`}
+            >
+              <Heart className="h-4 w-4" aria-hidden="true" />
+              いいね順
+            </Link>
           </div>
         </div>
         {textbooks.length === 0 ? (

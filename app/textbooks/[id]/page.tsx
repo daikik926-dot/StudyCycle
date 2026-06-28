@@ -4,9 +4,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getTextbook, textbooks } from "@/lib/textbooks";
+import { CompleteTransactionButton } from "@/components/CompleteTransactionButton";
 
 type TextbookRow = {
   id: string;
+  seller_id: string;
   title: string;
   author: string | null;
   course: string | null;
@@ -25,7 +27,7 @@ async function fetchTextbook(id: string): Promise<TextbookRow | null> {
     const { data } = await supabase
       .from("textbooks")
       .select(`
-        id, title, author, course, professor, price,
+        id, seller_id, title, author, course, professor, price,
         cover_url, has_senior_notes, condition, status,
         profiles!seller_id (display_name, faculty, year, is_verified)
       `)
@@ -46,10 +48,14 @@ export default async function TextbookDetailPage({
 }: {
   params: { id: string };
 }) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   const dbTextbook = await fetchTextbook(params.id);
 
   const demo = getTextbook(params.id);
   if (!dbTextbook && !demo) notFound();
+
+  const isSeller = !!(dbTextbook && user && dbTextbook.seller_id === user.id);
 
   const title = dbTextbook?.title ?? demo!.title;
   const author = dbTextbook?.author ?? demo!.author;
@@ -70,7 +76,7 @@ export default async function TextbookDetailPage({
           <Link
             href="/"
             className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-[#0056b3] hover:bg-slate-50"
-            aria-label="ホームに戻る"
+            aria-label="Back to home"
           >
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Link>
@@ -84,20 +90,13 @@ export default async function TextbookDetailPage({
       <div className="mx-auto grid max-w-5xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[22rem_1fr]">
         <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="relative aspect-[4/3] bg-blue-50">
-            {coverSrc ? (
-              <Image
-                src={coverSrc}
-                alt={`${title} cover`}
-                fill
-                className="object-cover"
-                sizes="(min-width: 1024px) 22rem, 100vw"
-              />
-            ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-blue-50">
-                <BookOpen className="h-16 w-16 text-slate-300" aria-hidden="true" />
-                <span className="text-sm font-bold text-slate-400">画像なし</span>
-              </div>
-            )}
+            <Image
+              src={coverSrc}
+              alt={`${title} cover`}
+              fill
+              className="object-cover"
+              sizes="(min-width: 1024px) 22rem, 100vw"
+            />
           </div>
           <div className="p-5">
             <p className="text-3xl font-black text-[#0056b3]">{priceRaw}</p>
@@ -126,7 +125,7 @@ export default async function TextbookDetailPage({
               安全な取引のために
             </h3>
             <p className="mt-2 text-sm font-bold leading-6 text-slate-700">
-              チャットはこの教科書出品からのみ開始できます。初回メッセージは学術利用に沖った定型文のみ送信できます。
+              チャットはこの教科書出品からのみ開始できます。初回メッセージは学術利用に沿った定型文のみ送信できます。
             </p>
           </div>
 
@@ -137,6 +136,9 @@ export default async function TextbookDetailPage({
             <MessageSquare className="h-5 w-5" aria-hidden="true" />
             この教科書についてチャットする
           </Link>
+          {isSeller && dbTextbook?.status !== "sold" && (
+            <CompleteTransactionButton textbookId={params.id} />
+          )}
         </section>
       </div>
     </main>

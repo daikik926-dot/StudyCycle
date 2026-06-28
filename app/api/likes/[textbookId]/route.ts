@@ -28,7 +28,7 @@ export async function POST(_req: NextRequest, { params }: { params: { textbookId
     .insert({ user_id: user.id, textbook_id: params.textbookId });
 
   if (error && error.code !== "23505") {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: `DB Error: ${error.message} (code: ${error.code})` }, { status: 500 });
   }
   return NextResponse.json({ ok: true });
 }
@@ -44,6 +44,6 @@ export async function DELETE(_req: NextRequest, { params }: { params: { textbook
     .eq("user_id", user.id)
     .eq("textbook_id", params.textbookId);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: `DB Error: ${error.message} (code: ${error.code})` }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

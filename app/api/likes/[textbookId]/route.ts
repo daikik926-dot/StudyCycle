@@ -19,31 +19,39 @@ function getSupabase() {
 }
 
 export async function POST(_req: NextRequest, { params }: { params: { textbookId: string } }) {
-  const supabase = getSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const supabase = getSupabase();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "ログインが必要です" }, { status: 401 });
 
-  const { error } = await supabase
-    .from("likes")
-    .insert({ user_id: user.id, textbook_id: params.textbookId });
+    const { error } = await supabase
+      .from("likes")
+      .insert({ user_id: user.id, textbook_id: params.textbookId });
 
-  if (error && error.code !== "23505") {
-    return NextResponse.json({ error: `DB Error: ${error.message} (code: ${error.code})` }, { status: 500 });
+    if (error && error.code !== "23505") {
+      return NextResponse.json({ error: `${error.message} (${error.code})` }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true });
+  } catch (e: unknown) {
+    return NextResponse.json({ error: `予期しないエラー: ${String(e)}` }, { status: 500 });
   }
-  return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { textbookId: string } }) {
-  const supabase = getSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const supabase = getSupabase();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "ログインが必要です" }, { status: 401 });
 
-  const { error } = await supabase
-    .from("likes")
-    .delete()
-    .eq("user_id", user.id)
-    .eq("textbook_id", params.textbookId);
+    const { error } = await supabase
+      .from("likes")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("textbook_id", params.textbookId);
 
-  if (error) return NextResponse.json({ error: `DB Error: ${error.message} (code: ${error.code})` }, { status: 500 });
-  return NextResponse.json({ ok: true });
+    if (error) return NextResponse.json({ error: `${error.message} (${error.code})` }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  } catch (e: unknown) {
+    return NextResponse.json({ error: `予期しないエラー: ${String(e)}` }, { status: 500 });
+  }
 }

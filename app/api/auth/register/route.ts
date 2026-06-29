@@ -11,8 +11,13 @@ export async function POST(req: NextRequest) {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!url || !anonKey || !serviceKey) {
-    return NextResponse.json({ error: "Server configuration error: missing env vars" }, { status: 500 });
+  // 登録に最低限必要なのは url と anonKey。どれが欠けているか明示する。
+  if (!url || !anonKey) {
+    const missing = [
+      !url && "NEXT_PUBLIC_SUPABASE_URL",
+      !anonKey && "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    ].filter(Boolean).join(", ");
+    return NextResponse.json({ error: `Server configuration error: missing ${missing}` }, { status: 500 });
   }
 
   let email: string, password: string, displayName: string;
@@ -44,28 +49,31 @@ export async function POST(req: NextRequest) {
   }
 
   const userId: string = signupData?.id;
-  if (!userId) {
-    return NextResponse.json({ error: `No user id: ${JSON.stringify(signupData)}` }, { status: 400 });
+
+  // プロフィール作成は best-effort。service key が無い／失敗しても登録は成功扱いにする。
+  if (userId && serviceKey) {
+    try {
+      const baseHandle = email.split("@")[0];
+      const handle = `${baseHandle}_${userId.slice(0, 6)}`;
+      await fetch(`${url}/rest/v1/profiles`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": serviceKey,
+          "Authorization": `Bearer ${serviceKey}`,
+          "Prefer": "resolution=merge-duplicates",
+        },
+        body: JSON.stringify({
+          id: userId,
+          handle,
+          display_name: displayName || baseHandle,
+          is_verified: email.endsWith(".ac.jp"),
+        }),
+      });
+    } catch {
+      // プロフィール作成に失敗しても登録自体は継続
+    }
   }
-
-  const baseHandle = email.split("@")[0];
-  const handle = `${baseHandle}_${userId.slice(0, 6)}`;
-
-  await fetch(`${url}/rest/v1/profiles`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "apikey": serviceKey,
-      "Authorization": `Bearer ${serviceKey}`,
-      "Prefer": "resolution=merge-duplicates",
-    },
-    body: JSON.stringify({
-      id: userId,
-      handle,
-      display_name: displayName || baseHandle,
-      is_verified: email.endsWith(".ac.jp"),
-    }),
-  });
 
   return NextResponse.json({ success: true });
 }

@@ -11,7 +11,6 @@ export async function POST(req: NextRequest) {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  // 登録に最低限必要なのは url と anonKey。どれが欠けているか明示する。
   if (!url || !anonKey) {
     const missing = [
       !url && "NEXT_PUBLIC_SUPABASE_URL",
@@ -19,6 +18,9 @@ export async function POST(req: NextRequest) {
     ].filter(Boolean).join(", ");
     return NextResponse.json({ error: `Server configuration error: missing ${missing}` }, { status: 500 });
   }
+
+  // デバッグ用：実際にデプロイで使われているキーの形を確認
+  const keyInfo = `key先頭=${anonKey.slice(0, 8)} 長さ=${anonKey.length} URL=${url}`;
 
   let email: string, password: string, displayName: string;
   try {
@@ -45,12 +47,11 @@ export async function POST(req: NextRequest) {
   const signupData = await signupRes.json();
   if (!signupRes.ok) {
     const msg = signupData?.error_description || signupData?.msg || signupData?.message || JSON.stringify(signupData);
-    return NextResponse.json({ error: msg }, { status: 400 });
+    return NextResponse.json({ error: `${msg} / ${keyInfo}` }, { status: 400 });
   }
 
   const userId: string = signupData?.id;
 
-  // プロフィール作成は best-effort。service key が無い／失敗しても登録は成功扱いにする。
   if (userId && serviceKey) {
     try {
       const baseHandle = email.split("@")[0];
